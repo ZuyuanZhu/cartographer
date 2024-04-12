@@ -22,6 +22,18 @@
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
+#include <iostream>
+
+#define POSE_EXTRAPOLATOR_DEBUG 
+// ANSI color codes
+const std::string red("\033[1;31m");
+const std::string green("\033[1;32m");
+const std::string blue("\033[1;34m");
+const std::string yellow("\033[1;33m");
+const std::string magenta("\033[1;35m");
+const std::string cyan("\033[1;36m");
+const std::string reset_color("\033[0m");
+
 namespace cartographer {
 namespace mapping {
 
@@ -86,6 +98,9 @@ void PoseExtrapolator::AddPose(const common::Time time,
   TrimOdometryData();
   odometry_imu_tracker_ = absl::make_unique<ImuTracker>(*imu_tracker_);
   extrapolation_imu_tracker_ = absl::make_unique<ImuTracker>(*imu_tracker_);
+#ifdef POSE_EXTRAPOLATOR_DEBUG  
+  std::cout << green << "PoseExtrapolator::AddPose called AdvanceImuTracker" << reset_color << std::endl;  //yes(use_imu_data = true)
+#endif
 }
 
 void PoseExtrapolator::AddImuData(const sensor::ImuData& imu_data) {
@@ -150,6 +165,12 @@ Eigen::Quaterniond PoseExtrapolator::EstimateGravityOrientation(
     const common::Time time) {
   ImuTracker imu_tracker = *imu_tracker_;
   AdvanceImuTracker(time, &imu_tracker);
+#ifdef POSE_EXTRAPOLATOR_DEBUG
+ // PRINT: PoseExtrapolator::EstimateGravityOrientation called AdvanceImuTracker //(use_imu_data = true)
+ // PRINT: PoseExtrapolator::EstimateGravityOrientation called AdvanceImuTracker (use_imu_data = false) 
+  std::cout << green << "PoseExtrapolator::EstimateGravityOrientation called imu_tracker.orientation(): " 
+    << imu_tracker.orientation() << reset_color << std::endl;  
+#endif
   return imu_tracker.orientation();
 }
 
@@ -222,6 +243,14 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
     ++it;
   }
   imu_tracker->Advance(time);
+
+#ifdef POSE_EXTRAPOLATOR_DEBUG
+  const Eigen::Quaterniond orientation = imu_tracker->orientation();
+  std::cout << green << "PoseExtrapolator::AdvanceImuTracker IMU Tracker Orientation: w=" << orientation.w()  // yes (use_imu_data = true)
+            << ", x=" << orientation.x()
+            << ", y=" << orientation.y()
+            << ", z=" << orientation.z() << reset_color << std::endl;
+#endif
 }
 
 Eigen::Quaterniond PoseExtrapolator::ExtrapolateRotation(
@@ -229,6 +258,9 @@ Eigen::Quaterniond PoseExtrapolator::ExtrapolateRotation(
   CHECK_GE(time, imu_tracker->time());
   AdvanceImuTracker(time, imu_tracker);
   const Eigen::Quaterniond last_orientation = imu_tracker_->orientation();
+#ifdef POSE_EXTRAPOLATOR_DEBUG
+  std::cout << green << "PoseExtrapolator::ExtrapolateRotation called AdvanceImuTracker" << reset_color << std::endl;  //yes (use_imu_data = true)
+#endif
   return last_orientation.inverse() * imu_tracker->orientation();
 }
 
@@ -253,6 +285,10 @@ PoseExtrapolator::ExtrapolatePosesWithGravity(
   const Eigen::Vector3d current_velocity = odometry_data_.size() < 2
                                                ? linear_velocity_from_poses_
                                                : linear_velocity_from_odometry_;
+#ifdef POSE_EXTRAPOLATOR_DEBUG 
+  std::cout << red << "PoseExtrapolator::ExtrapolatePosesWithGravity called AdvanceImuTracker" << reset_color << std::endl;  // no(use_imu_data = false&true)
+#endif        
+
   return ExtrapolationResult{poses, ExtrapolatePose(times.back()),
                              current_velocity,
                              EstimateGravityOrientation(times.back())};

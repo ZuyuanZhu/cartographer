@@ -23,6 +23,18 @@
 #include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/range_data.h"
 
+#include <iostream>
+
+#define LOCAL_TRAJECTORY_BUILDER_DEBUG 
+// ANSI color codes
+const std::string red("\033[1;31m");
+const std::string green("\033[1;32m");
+const std::string blue("\033[1;34m");
+const std::string yellow("\033[1;33m");
+const std::string magenta("\033[1;35m");
+const std::string cyan("\033[1;36m");
+const std::string reset_color("\033[0m");
+
 namespace cartographer {
 namespace mapping {
 
@@ -195,6 +207,11 @@ LocalTrajectoryBuilder2D::AddRangeData(
     num_accumulated_ = 0;
     const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
         extrapolator_->EstimateGravityOrientation(time));
+
+#ifdef LOCAL_TRAJECTORY_BUILDER_DEBUG
+    std::cout << red << "LocalTrajectoryBuilder2D::AddRangeData called EstimateGravityOrientation" << reset_color << std::endl;  // yes(use_imu_data = false&true)
+#endif
+
     // TODO(gaschler): This assumes that 'range_data_poses.back()' is at time
     // 'time'.
     accumulated_range_data_.origin = range_data_poses.back().translation();
@@ -220,6 +237,9 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
   }
 
   // Computes a gravity aligned pose prediction.
+  // Applies an adaptive voxel filter to the gravity-aligned range data to reduce noise 
+  // and computational complexity. The filtering is configured by options_.adaptive_voxel_filter_options() 
+  // and results in a subset of the original points that are deemed significant for further processing.
   const transform::Rigid3d non_gravity_aligned_pose_prediction =
       extrapolator_->ExtrapolatePose(time);
   const transform::Rigid2d pose_prediction = transform::Project2D(
@@ -233,6 +253,10 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
   }
 
   // local map frame <- gravity-aligned frame
+  //Performs scan matching against the current map to refine the pose estimate. 
+  // It uses the filtered, gravity-aligned point cloud and the predicted pose 
+  // as inputs to the scan matcher. If the scan matching is successful, 
+  // it returns a refined 2D pose estimate; otherwise, it logs a warning and returns nullptr.
   std::unique_ptr<transform::Rigid2d> pose_estimate_2d =
       ScanMatch(time, pose_prediction, filtered_gravity_aligned_point_cloud);
   if (pose_estimate_2d == nullptr) {

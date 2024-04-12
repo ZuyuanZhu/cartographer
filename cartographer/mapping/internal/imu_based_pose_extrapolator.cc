@@ -30,6 +30,16 @@
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
+#define ImuBasedPoseExtrapolator_DEBUG 
+// ANSI color codes
+const std::string red("\033[1;31m");
+const std::string green("\033[1;32m");
+const std::string blue("\033[1;34m");
+const std::string yellow("\033[1;33m");
+const std::string magenta("\033[1;35m");
+const std::string cyan("\033[1;36m");
+const std::string reset_color("\033[0m");
+
 namespace cartographer {
 namespace mapping {
 
@@ -120,6 +130,10 @@ ImuBasedPoseExtrapolator::ExtrapolatePosesWithGravity(
   CHECK_GE(time, newest_timed_pose.time);
   CHECK_GE(times.size(), 1);
   last_extrapolated_time_ = time;
+
+#ifdef ImuBasedPoseExtrapolator_DEBUG 
+  std::cout << red << "ImuBasedPoseExtrapolator::ExtrapolatePosesWithGravity" << reset_color << std::endl;  // no(use_imu_data = false & true)
+#endif        
 
   if (timed_pose_queue_.size() < 3 ||
       common::ToSeconds(time - newest_timed_pose.time) < 1e-6) {
@@ -339,6 +353,10 @@ ImuBasedPoseExtrapolator::ExtrapolatePosesWithGravity(
       (extrapolated_pose.transform.translation() -
        last_pose.transform.translation()) /
       common::ToSeconds(time - last_pose.time);
+
+#ifdef ImuBasedPoseExtrapolator_DEBUG 
+  std::cout << red << "ImuBasedPoseExtrapolator::ExtrapolatePosesWithGravity" << reset_color << std::endl;  // no(use_imu_data = false & true)
+#endif        
 
   return ExtrapolationResult{
       InterpolatePoses(last_pose, extrapolated_pose, times.begin(),

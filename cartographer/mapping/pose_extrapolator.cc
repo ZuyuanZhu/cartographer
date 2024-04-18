@@ -174,7 +174,11 @@ Eigen::Quaterniond PoseExtrapolator::EstimateGravityOrientation(
   return imu_tracker.orientation();
 }
 
-void PoseExtrapolator::UpdateVelocitiesFromPoses() {
+//The code calculates linear and angular velocities based on the change in position and 
+//orientation between the newest and oldest poses in a queue of timed poses. This implies 
+//that these poses are snapshots of the robot's global position and orientation at different times, 
+//making it possible to estimate movement over a larger scale.
+void PoseExtrapolator::UpdateVelocitiesFromPoses() {  // todo debug
   if (timed_pose_queue_.size() < 2) {
     // We need two poses to estimate velocities.
     return;

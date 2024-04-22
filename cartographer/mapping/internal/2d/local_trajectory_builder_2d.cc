@@ -267,6 +267,10 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
       transform::Embed3D(*pose_estimate_2d) * gravity_alignment;
   extrapolator_->AddPose(time, pose_estimate);
 
+#ifdef LOCAL_TRAJECTORY_BUILDER_DEBUG
+  std::cout << red << "Pose Estimate - X: " << pose_estimate.translation().x() 
+          << ", Y: " << pose_estimate.translation().y() << reset_color << std::endl;
+#endif
   sensor::RangeData range_data_in_local =
       TransformRangeData(gravity_aligned_range_data,
                          transform::Embed3D(pose_estimate_2d->cast<float>()));

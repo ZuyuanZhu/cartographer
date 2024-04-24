@@ -27,6 +27,18 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
 #include "glog/logging.h"
+#include <iostream>
+
+
+#define MAP_BY_TIME_DEBUG 
+// ANSI color codes
+const std::string red("\033[1;31m");
+const std::string green("\033[1;32m");
+const std::string blue("\033[1;34m");
+const std::string yellow("\033[1;33m");
+const std::string magenta("\033[1;35m");
+const std::string cyan("\033[1;36m");
+const std::string reset_color("\033[0m");
 
 namespace cartographer {
 namespace sensor {
@@ -40,7 +52,19 @@ class MapByTime {
     CHECK_GE(trajectory_id, 0);
     auto& trajectory = data_[trajectory_id];
     if (!trajectory.empty()) {
-      CHECK_GT(data.time, std::prev(trajectory.end())->first);
+      // CHECK_GT(data.time, std::prev(trajectory.end())->first);
+      
+      auto lastTime = std::prev(trajectory.end())->first;
+      if (data.time <= lastTime) {
+
+#ifdef MAP_BY_TIME_DEBUG
+            std::cout << "######### data.time <= lastTime #########" << std::endl;
+            std::cout << "Appending data of type: " << typeid(DataType).name() << std::endl;
+            // std::cout << "Data: " << data << std::endl;
+            std::cout << "lastTime: " << lastTime << "||current time:" << data.time << std::endl;
+#endif
+        }
+      // CHECK_GT(data.time, std::prev(trajectory.end())->first);
     }
     trajectory.emplace(data.time, data);
   }

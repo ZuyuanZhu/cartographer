@@ -24,7 +24,7 @@
 
 #include <iostream>
 
-#define POSE_EXTRAPOLATOR_DEBUG 
+// #define POSE_EXTRAPOLATOR_DEBUG 
 // ANSI color codes
 const std::string red("\033[1;31m");
 const std::string green("\033[1;32m");
@@ -112,6 +112,12 @@ void PoseExtrapolator::AddImuData(const sensor::ImuData& imu_data) {
 
 void PoseExtrapolator::AddOdometryData(
     const sensor::OdometryData& odometry_data) {
+
+// Here, the timestamp is working fine, but not working in cartographer/mapping/internal/optimization/optimization_problem_2d.cc
+// Why? which code runs first?
+  std::cout << cyan << "PoseExtrapolator::AddOdometryData## odometry_data.time: " 
+            << odometry_data.time << "timed_pose_queue_.back().time: "<<timed_pose_queue_.back().time<<reset_color<<std::endl;
+
   CHECK(timed_pose_queue_.empty() ||
         odometry_data.time >= timed_pose_queue_.back().time);
   odometry_data_.push_back(odometry_data);
@@ -212,10 +218,25 @@ void PoseExtrapolator::TrimImuData() {
 }
 
 void PoseExtrapolator::TrimOdometryData() {
+    // Debug: Print all timestamps before trimming
+  std::cout << green << "TrimOdometryData: Timestamps in odometry_data_ before trimming:" << std::endl;
+  for (const auto& odometry_data : odometry_data_) {
+    // double time_in_seconds = std::chrono::duration<double>(time_since_epoch).count();
+    std::cout << "Timestamp: " << odometry_data.time << std::endl;
+  }
+  std::cout << reset_color <<std::endl;
+
   while (odometry_data_.size() > 2 && !timed_pose_queue_.empty() &&
          odometry_data_[1].time <= timed_pose_queue_.back().time) {
     odometry_data_.pop_front();
   }
+
+  std::cout << blue << "TrimOdometryData: Timestamps in odometry_data_ after trimming:" << std::endl;
+  for (const auto& odometry_data : odometry_data_) {
+    std::cout << "Timestamp: " << odometry_data.time << std::endl;
+  }
+  std::cout << reset_color <<std::endl;
+
 }
 
 void PoseExtrapolator::AdvanceImuTracker(const common::Time time,

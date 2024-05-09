@@ -36,7 +36,7 @@
 #include "glog/logging.h"
 
 
-#define OPT_PRO_DEBUG 
+// #define OPT_PRO_DEBUG 
 // ANSI color codes
 // const std::string red("\033[1;31m");
 // const std::string green("\033[1;32m");

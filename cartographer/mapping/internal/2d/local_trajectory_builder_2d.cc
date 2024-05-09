@@ -25,7 +25,7 @@
 
 #include <iostream>
 
-#define LOCAL_TRAJECTORY_BUILDER_DEBUG 
+// #define LOCAL_TRAJECTORY_BUILDER_DEBUG 
 // ANSI color codes
 const std::string red("\033[1;31m");
 const std::string green("\033[1;32m");

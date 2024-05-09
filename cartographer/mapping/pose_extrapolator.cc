@@ -115,8 +115,8 @@ void PoseExtrapolator::AddOdometryData(
 
 // Here, the timestamp is working fine, but not working in cartographer/mapping/internal/optimization/optimization_problem_2d.cc
 // Why? which code runs first?
-  std::cout << cyan << "PoseExtrapolator::AddOdometryData## odometry_data.time: " 
-            << odometry_data.time << "timed_pose_queue_.back().time: "<<timed_pose_queue_.back().time<<reset_color<<std::endl;
+  // std::cout << cyan << "PoseExtrapolator::AddOdometryData## odometry_data.time: " 
+            // << odometry_data.time << "timed_pose_queue_.back().time: "<<timed_pose_queue_.back().time<<reset_color<<std::endl;
 
   CHECK(timed_pose_queue_.empty() ||
         odometry_data.time >= timed_pose_queue_.back().time);
@@ -137,6 +137,13 @@ void PoseExtrapolator::AddOdometryData(
       transform::RotationQuaternionToAngleAxisVector(
           odometry_pose_delta.rotation()) /
       odometry_time_delta;
+
+  // std::cout << green << "Angular Velocity from Odometry: ["
+  //         << angular_velocity_from_odometry_.x() << ", "
+  //         << angular_velocity_from_odometry_.y() << ", "
+  //         << angular_velocity_from_odometry_.z() << "]" << reset_color <<std::endl;
+
+
   if (timed_pose_queue_.empty()) {
     return;
   }
@@ -208,6 +215,12 @@ void PoseExtrapolator::UpdateVelocitiesFromPoses() {  // todo debug
       transform::RotationQuaternionToAngleAxisVector(
           oldest_pose.rotation().inverse() * newest_pose.rotation()) /
       queue_delta;
+
+  // std::cout << red << "Angular Velocity from Poses: ["
+  //           << angular_velocity_from_poses_.x() << ", "
+  //           << angular_velocity_from_poses_.y() << ", "
+  //           << angular_velocity_from_poses_.z() << "]" << reset_color <<std::endl;
+
 }
 
 void PoseExtrapolator::TrimImuData() {
@@ -219,23 +232,23 @@ void PoseExtrapolator::TrimImuData() {
 
 void PoseExtrapolator::TrimOdometryData() {
     // Debug: Print all timestamps before trimming
-  std::cout << green << "TrimOdometryData: Timestamps in odometry_data_ before trimming:" << std::endl;
+  // std::cout << green << "TrimOdometryData: Timestamps in odometry_data_ before trimming:" << std::endl;
   for (const auto& odometry_data : odometry_data_) {
     // double time_in_seconds = std::chrono::duration<double>(time_since_epoch).count();
-    std::cout << "Timestamp: " << odometry_data.time << std::endl;
+    // std::cout << "Timestamp: " << odometry_data.time << std::endl;
   }
-  std::cout << reset_color <<std::endl;
+  // std::cout << reset_color <<std::endl;
 
   while (odometry_data_.size() > 2 && !timed_pose_queue_.empty() &&
          odometry_data_[1].time <= timed_pose_queue_.back().time) {
     odometry_data_.pop_front();
   }
 
-  std::cout << blue << "TrimOdometryData: Timestamps in odometry_data_ after trimming:" << std::endl;
+  // std::cout << blue << "TrimOdometryData: Timestamps in odometry_data_ after trimming:" << std::endl;
   for (const auto& odometry_data : odometry_data_) {
-    std::cout << "Timestamp: " << odometry_data.time << std::endl;
+    // std::cout << "Timestamp: " << odometry_data.time << std::endl;
   }
-  std::cout << reset_color <<std::endl;
+  // std::cout << reset_color <<std::endl;
 
 }
 
@@ -264,7 +277,7 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
   while (it != imu_data_.end() && it->time < time) {
     imu_tracker->Advance(it->time);
     imu_tracker->AddImuLinearAccelerationObservation(it->linear_acceleration);
-    imu_tracker->AddImuAngularVelocityObservation(it->angular_velocity);
+    imu_tracker->AddImuAngularVelocityObservation(it->angular_velocity);  // todo: print
     ++it;
   }
   imu_tracker->Advance(time);
